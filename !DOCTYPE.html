@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estudo Académico: Tarefa de Atenção (SART)</title>
+    <style>
+        * { box-sizing: border-box; user-select: none; }
+        body {
+            margin: 0; padding: 0;
+            background-color: #121212; color: #ffffff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; overflow: hidden;
+        }
+        .screen {
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+            text-align: center; max-width: 700px; width: 90%;
+            padding: 35px; background: #1e1e1e;
+            border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .active { display: flex; }
+        h1 { font-size: 24px; margin-bottom: 15px; color: #4dabf7; line-height: 1.3; }
+        p { font-size: 16px; line-height: 1.6; color: #e0e0e0; margin-bottom: 15px; }
+        .form-group { margin: 15px 0; width: 100%; max-width: 400px; text-align: left; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: #adb5bd; }
+        input {
+            width: 100%; padding: 12px 14px; border-radius: 6px;
+            border: 1px solid #495057; background: #2b2b2b; color: #fff; font-size: 16px;
+        }
+        button {
+            margin-top: 20px; padding: 12px 28px; font-size: 16px; font-weight: bold;
+            color: #fff; background-color: #228be6; border: none;
+            border-radius: 6px; cursor: pointer; transition: background 0.2s;
+        }
+        button:hover { background-color: #1c7ed6; }
+        #btn-final-form {
+            background-color: #2b8a3e; padding: 16px 32px; font-size: 18px; margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(43,138,62,0.4); animation: pulse 2s infinite;
+            white-space: normal; height: auto;
+        }
+        #btn-final-form:hover { background-color: #237032; }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        #game-area { 
+            background: transparent; box-shadow: none; height: 100vh; width: 100vw; max-width: none; 
+            touch-action: none; /* Impede zoom duplo em telemóveis ao tocar rápido */
+            cursor: pointer;
+        }
+        #stimulus {
+            font-family: Arial, sans-serif; font-weight: bold;
+            display: flex; justify-content: center; align-items: center;
+            height: 250px; width: 250px;
+        }
+        .mask-circle {
+            border: 4px solid #ffffff; border-radius: 50%;
+            width: 110px; height: 110px; display: flex;
+            justify-content: center; align-items: center;
+            font-size: 64px; font-weight: normal;
+        }
+        .mask-green { border-color: #40c057; color: #40c057; }
+        #feedback-msg { color: #fa5252; font-size: 20px; font-weight: bold; margin-top: 20px; min-height: 35px; }
+        
+        #popup-container {
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 9999; pointer-events: none;
+        }
+        .popup {
+            position: fixed;
+            width: 90%; max-width: 440px; background: #ffffff; color: #212529;
+            border-left: 10px solid #228be6; border-radius: 12px;
+            padding: 16px 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.65);
+            text-align: left; animation: popIn 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .popup-header {
+            font-weight: 800; font-size: 14px; color: #495057; margin-bottom: 6px; 
+            display: flex; justify-content: space-between; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .popup-body { font-size: 16px; line-height: 1.4; color: #111; font-weight: 500; }
+        
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.75); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+        th, td { border: 1px solid #343a40; padding: 10px; text-align: left; }
+        th { background-color: #2b2b2b; color: #4dabf7; }
+    </style>
+</head>
+<body>
+
+    <div id="popup-container"></div>
+
+    <!-- ECRÃ 1: BOAS-VINDAS -->
+    <div id="setup-screen" class="screen active">
+        <h1>Estudo sobre Atenção e Vigilância Sustentada</h1>
+        <p>A tarefa dura cerca de <strong>2 minutos</strong> e pode ser realizada num <strong>computador</strong> ou no <strong>telemóvel</strong>.</p>
+        <div class="form-group">
+            <label for="participant-id">Introduz o teu ID (Iniciais + Últimos 3 dígitos do telemóvel):</label>
+            <input type="text" id="participant-id" placeholder="Ex: JS_492" required>
+        </div>
+        <button id="btn-to-inst" type="button">Continuar para as Instruções</button>
+    </div>
+
+    <!-- ECRÃ 2: INSTRUÇÕES -->
+    <div id="instruction-screen" class="screen">
+        <h1 id="inst-title">Instruções da Tarefa</h1>
+        <div id="inst-text">
+            <p>Vão aparecer números de <strong>1 a 9</strong> no centro do ecrã, um de cada vez, seguidos de um círculo com um "X".</p>
+            <p>A tua tarefa é <strong>TOCAR NO ECRÃ</strong> (telemóvel) ou pressionar a <strong>BARRA DE ESPAÇOS</strong> (computador) o mais rápido possível sempre que vires qualquer número, <strong>EXCETO o número 3</strong>.</p>
+            <p><strong>Resumo:</strong><br>
+            Números 1, 2, 4, 5, 6, 7, 8, 9 ➔ <strong>TOCAR / ESPAÇO</strong>.<br>
+            Número <strong>3</strong> ➔ <strong>NÃO FAZER NADA</strong> (esperar pelo próximo número).</p>
+            <p>Vamos começar com um breve treino (18 números) para praticares.</p>
+        </div>
+        <button id="btn-start-block" type="button">Começar</button>
+    </div>
+
+    <!-- ECRÃ 3: ÁREA DE JOGO -->
+    <div id="game-area" class="screen">
+        <div id="stimulus"></div>
+        <div id="feedback-msg"></div>
+    </div>
+
+    <!-- ECRÃ 4: RESULTADOS E PONTE PARA O FORMS -->
+    <div id="results-screen" class="screen">
+        <h1>Tarefa Concluída!</h1>
+        <p>Muito obrigado! Para concluíres o estudo, é necessário preencher o questionário final.</p>
+        <button id="btn-final-form" type="button">Avançar para o Questionário Final</button>
+        <table>
+            <tr><th>Métrica</th><th>O teu resultado</th></tr>
+            <tr><td>Erros de Omissão (Go)</td><td id="res-go-mistakes"></td></tr>
+            <tr><td>Erros de Comissão (No-Go)</td><td id="res-nogo-mistakes"></td></tr>
+            <tr><td>Tempo de Reação Médio</td><td id="res-rt"></td></tr>
+        </table>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let participantId = "Anonimo";
+    let condition = Math.random() < 0.5 ? "controlo" : "experimental";
+    const mainCycles = 10; 
+    
+    let currentBlock = "training";
+    const fontSizes = ["48px", "72px", "94px", "100px", "120px"];
+    
+    let trialList = [];
+    let currentTrialIndex = 0;
+    let trialData = [];
+    let responded = false;
+    let responseTime = null;
+    let trialStartTime = 0;
+    let currentPopupState = 0;
+    let popupInterval = null;
+    let audioCtx = null;
+
+    const notifications = [
+        { app: "WhatsApp", color: "#25D366", msg: "Grupo de Curso: Alguém já entregou o relatório de estatística? Preciso de ajuda!" },
+        { app: "Instagram", color: "#E1306C", msg: "@joana_silva mencionou-te numa história: 'Finalmente férias!'" },
+        { app: "Email Académico", color: "#0072C6", msg: "URGENTE: Alteração da sala de exame de hoje para o Anfiteatro B." },
+        { app: "WhatsApp", color: "#25D366", msg: "Mãe: Liga-me assim que saíres da aula, é mesmo importante!" },
+        { app: "Aviso de Sistema", color: "#fa5252", msg: "Bateria muito fraca (8%). Ligue o carregador em breve." },
+        { app: "Inforestudante", color: "#f59f00", msg: "Atenção: A submissão do trabalho prático fecha dentro de 15 minutos." },
+        { app: "Instagram", color: "#E1306C", msg: "Tens 3 novos pedidos de mensagem e 2 vídeos em direto agora." },
+        { app: "MB WAY", color: "#d6336c", msg: "Recebeste um pedido de divisão de conta no valor de 14,50€." },
+        { app: "TikTok", color: "#000000", msg: "O teu amigo acabou de te enviar 4 vídeos novos: 'Tens mesmo de ver isto 😂'" }
+    ];
+
+    const positions = [
+        { top: "20px", right: "20px" }, { top: "20px", left: "20px" },
+        { bottom: "20px", right: "20px" }, { bottom: "20px", left: "20px" },
+        { top: "15px", left: "calc(50% - 200px)" }, { bottom: "15px", left: "calc(50% - 200px)" }
+    ];
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    document.getElementById('btn-to-inst').addEventListener('click', () => {
+        const idInput = document.getElementById('participant-id').value.trim();
+        if (idInput === "") { alert("Por favor, preenche o teu ID."); return; }
+        participantId = idInput;
+        showScreen('instruction-screen');
+    });
+
+    document.getElementById('btn-start-block').addEventListener('click', () => {
+        try { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+        showScreen('game-area');
+        const cycles = (currentBlock === "training") ? 2 : mainCycles;
+        trialList = generateDigits(cycles);
+        currentTrialIndex = 0;
+        if (currentBlock === "realtest" && condition === "experimental") startPopups();
+        runCountdown(3);
+    });
+
+    function generateDigits(cycles) {
+        let digits = [];
+        for (let c = 0; c < cycles; c++) {
+            let base = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            for (let i = base.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [base[i], base[j]] = [base[j], base[i]];
+            }
+            if (digits.length > 0 && digits[digits.length - 1] === base[0]) { [base[0], base[1]] = [base[1], base[0]]; }
+            digits.push(...base);
+        }
+        return digits;
+    }
+
+    function runCountdown(seconds) {
+        const stim = document.getElementById('stimulus');
+        const feed = document.getElementById('feedback-msg');
+        feed.innerText = "";
+        if (seconds > 0) {
+            stim.style.fontSize = "48px";
+            stim.innerHTML = "Prepara-te... " + seconds;
+            setTimeout(() => runCountdown(seconds - 1), 1000);
+        } else {
+            stim.innerHTML = "";
+            setTimeout(nextTrial, 1000);
+        }
+    }
+
+    // Função única para lidar com a resposta (toque no ecrã ou barra de espaços)
+    function handleResponse(e) {
+        if (trialStartTime > 0 && !responded) {
+            if (e && e.preventDefault && e.type === 'touchstart') e.preventDefault();
+            responded = true; 
+            responseTime = Math.round(performance.now() - trialStartTime);
+            const maskEl = document.querySelector('.mask-circle');
+            if (maskEl) maskEl.classList.add('mask-green');
+        }
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT') return;
+        if (e.key === 'F9') {
+            currentBlock = "realtest"; trialData.push({ block: "realtest", trialType: 1, correct: 1, rt: 350, popupActive: 0 });
+            endBlock(); return;
+        }
+        if (e.code === 'Space') {
+            e.preventDefault();
+            handleResponse(e);
+        }
+    });
+
+    // Eventos para ecrã tátil e clique do rato (apenas na área do jogo)
+    const gameArea = document.getElementById('game-area');
+    gameArea.addEventListener('touchstart', handleResponse, { passive: false });
+    gameArea.addEventListener('mousedown', (e) => {
+        if (e.button === 0) handleResponse(e); // Apenas botão esquerdo do rato
+    });
+
+    function nextTrial() {
+        if (currentTrialIndex >= trialList.length) { endBlock(); return; }
+        const digit = trialList[currentTrialIndex];
+        const fontIndex = Math.floor(Math.random() * fontSizes.length);
+        const stim = document.getElementById('stimulus');
+        const feed = document.getElementById('feedback-msg');
+
+        feed.innerText = ""; responded = false; responseTime = null; trialStartTime = performance.now();
+        stim.style.fontSize = fontSizes[fontIndex]; stim.innerHTML = digit;
+
+        setTimeout(() => {
+            const greenClass = responded ? "mask-green" : "";
+            stim.innerHTML = '<div class="mask-circle ' + greenClass + '">X</div>';
+            setTimeout(() => { evaluateTrial(digit, fontIndex + 1); }, 900);
+        }, 250);
+    }
+
+    function evaluateTrial(digit, fontSizeCode) {
+        const isNoGo = (digit === 3);
+        const trialType = isNoGo ? 0 : 1;
+        let isCorrect = 1;
+        if ((isNoGo && responded) || (!isNoGo && !responded)) isCorrect = 0;
+
+        trialData.push({ block: currentBlock, trialType: trialType, correct: isCorrect, rt: responseTime !== null ? responseTime : "", popupActive: currentPopupState });
+        currentTrialIndex++; trialStartTime = 0;
+
+        if (isCorrect === 0) {
+            const stim = document.getElementById('stimulus'); const feed = document.getElementById('feedback-msg');
+            stim.innerHTML = ""; feed.innerText = isNoGo ? "ERRO! Tocaste no número 3." : "ERRO! Esqueceste-te de tocar.";
+            setTimeout(nextTrial, 3000);
+        } else {
+            nextTrial();
+        }
+    }
+
+    function startPopups() {
+        setTimeout(() => { if (currentBlock === "realtest") triggerPopup(); }, 3500);
+        popupInterval = setInterval(() => { if (Math.random() < 0.80) triggerPopup(); }, 4500);
+    }
+
+    function triggerPopup() {
+        const container = document.getElementById('popup-container');
+        const item = notifications[Math.floor(Math.random() * notifications.length)];
+        const pos = positions[Math.floor(Math.random() * positions.length)];
+        
+        try {
+            if (audioCtx) {
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime); osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+            }
+        } catch(e) {}
+
+        const popup = document.createElement('div'); popup.className = 'popup'; popup.style.borderLeftColor = item.color;
+        // Previne que em ecrãs muito pequenos de telemóvel o popup saia do ecrã
+        if (pos.top) popup.style.top = pos.top; if (pos.bottom) popup.style.bottom = pos.bottom;
+        if (window.innerWidth < 500) {
+            popup.style.left = "5%"; popup.style.right = "5%"; popup.style.width = "90%";
+        } else {
+            if (pos.left) popup.style.left = pos.left; if (pos.right) popup.style.right = pos.right;
+        }
+
+        popup.innerHTML = '<div class="popup-header"><span style="color:' + item.color + '">🔔 ' + item.app + '</span><span>agora mesmo</span></div><div class="popup-body">' + item.msg + '</div>';
+        container.appendChild(popup); currentPopupState = 1;
+
+        setTimeout(() => { popup.remove(); if (container.children.length === 0) currentPopupState = 0; }, 3800);
+    }
+
+    function stopPopups() {
+        if (popupInterval) clearInterval(popupInterval);
+        document.getElementById('popup-container').innerHTML = ""; currentPopupState = 0;
+    }
+
+    function endBlock() {
+        stopPopups();
+        if (currentBlock === "training") {
+            currentBlock = "realtest";
+            document.getElementById('inst-title').innerText = "Fim do Treino!";
+            document.getElementById('inst-text').innerHTML = '<p>Muito bem! Agora vamos iniciar o <strong>Teste Principal</strong>. Lembra-te: <strong>TOCA NO ECRÃ</strong> para todos os números, <strong>exceto para o número 3</strong>.</p>';
+            showScreen('instruction-screen');
+        } else {
+            calculateAndBridgeToForms();
+            showScreen('results-screen');
+        }
+    }
+
+    function calculateAndBridgeToForms() {
+        const realTrials = trialData.filter(d => d.block === "realtest");
+        const goTrials = realTrials.filter(d => d.trialType === 1);
+        const noGoTrials = realTrials.filter(d => d.trialType === 0);
+
+        const goMistakes = goTrials.filter(d => d.correct === 0).length;
+        const noGoMistakes = noGoTrials.filter(d => d.correct === 0).length;
+        const mistakesDuringPopup = realTrials.filter(d => d.correct === 0 && d.popupActive === 1).length;
+
+        const goPerc = goTrials.length ? ((goMistakes / goTrials.length) * 100).toFixed(1) : 0;
+        const noGoPerc = noGoTrials.length ? ((noGoMistakes / noGoTrials.length) * 100).toFixed(1) : 0;
+        const validRTs = goTrials.filter(d => d.correct === 1 && d.rt !== "").map(d => d.rt);
+        const avgRT = validRTs.length ? Math.round(validRTs.reduce((a, b) => a + b, 0) / validRTs.length) : 0;
+
+        document.getElementById('res-go-mistakes').innerText = goMistakes + " em " + goTrials.length + " (" + goPerc + "%)";
+        document.getElementById('res-nogo-mistakes').innerText = noGoMistakes + " em " + noGoTrials.length + " (" + noGoPerc + "%)";
+        document.getElementById('res-rt').innerText = avgRT + " ms";
+
+        const resultString = [
+            participantId, condition,
+            goTrials.length, goMistakes, goPerc + "%",
+            noGoTrials.length, noGoMistakes, noGoPerc + "%",
+            avgRT, mistakesDuringPopup
+        ].join(" ; ");
+
+        document.getElementById('btn-final-form').addEventListener('click', () => {
+            const formBaseUrl = "https://docs.google.com/forms/d/e/1FAIpQLSeUxjggDsQFJoreJEMaVvfxYDxQgr2oxiroxM3bJ6ysA-KmwA/viewform?usp=pp_url";
+            const idParam = "&entry.1673872411=" + encodeURIComponent(participantId);
+            const dataParam = "&entry.1369757654=" + encodeURIComponent(resultString);
+            window.location.href = formBaseUrl + idParam + dataParam;
+        });
+    }
+});
+</script>
+</body>
+</html>
